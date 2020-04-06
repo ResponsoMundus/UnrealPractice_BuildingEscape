@@ -19,7 +19,13 @@ void UWorldPosition::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+	AActor* Object = GetOwner();
+	FString ObjectName = Object->GetName();
+	FVector ObjectPosition = Object->GetActorLocation();
+	FTransform ObjectTransform = Object->GetActorTransform();
+	
+	UE_LOG(LogTemp, Warning, TEXT("World Position instance of %s ready!"), *ObjectName);
+	UE_LOG(LogTemp, Warning, TEXT("Object %s is at %s"), *ObjectName, *ObjectPosition.ToString());
 	
 }
 

@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Actor.h"
 
+#define OUT
+
 // Sets default values for this component's properties
 UOpenDoor::UOpenDoor()
 {
@@ -25,7 +27,7 @@ void UOpenDoor::BeginPlay()
 	World = GetWorld();
 	Owner = GetOwner();
 
-	Actor = World->GetFirstPlayerController()->GetPawn();
+	// Actor = World->GetFirstPlayerController()->GetPawn();
 
 	InitalYaw = Owner->GetActorRotation().Yaw;
 	TargetYaw += InitalYaw;
@@ -33,18 +35,34 @@ void UOpenDoor::BeginPlay()
 	if (!PressurePlate) {
 		UE_LOG(LogTemp, Warning, TEXT("The PressurePlate in OpenDoor component of %s has not been set."), *Owner->GetName());
 	}
-	if (!Actor) {
-		UE_LOG(LogTemp, Warning, TEXT("The Actor in OpenDoor component of %s has not been set."), *Owner->GetName());
-	}
+
+	FindAudioComponent();
+	// if (!Actor) {
+	// 	UE_LOG(LogTemp, Warning, TEXT("The Actor in OpenDoor component of %s has not been set."), *Owner->GetName());
+	// }
 }
 
+float UOpenDoor::TotalMassOnPressurePlate() const {
+	float TotalMass = 0.f;
+
+	TArray<AActor*> ActorList;
+	if (PressurePlate) {
+		PressurePlate->GetOverlappingActors(OUT ActorList);
+
+		for(AActor* Actor : ActorList) {
+			TotalMass += Actor->FindComponentByClass<UMeshComponent>()->GetMass();
+		}
+	}
+
+	return TotalMass;
+}
 
 // Called every frame
 void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (PressurePlate && Actor && PressurePlate->IsOverlappingActor(Actor)) {
+	if (TotalMassOnPressurePlate() > Threshold) {
 		OpenDoor(DeltaTime);
 		LastOpenTime = World->GetTimeSeconds();
 	} else if (World->GetTimeSeconds() - LastOpenTime > DoorCloseDelay) {
@@ -56,11 +74,27 @@ void UOpenDoor::OpenDoor(float DeltaTime) {
 	FRotator OpenDoor(Owner->GetActorRotation());
 	OpenDoor.Yaw = FMath::Lerp(OpenDoor.Yaw, TargetYaw, DeltaTime * DoorOpenSpeed);
 	Owner->SetActorRotation(OpenDoor);
+
+	if (!DoorOpened && AudioComponent) {
+		AudioComponent->Play();
+		DoorOpened = true;
+	}
 }
 
 void UOpenDoor::CloseDoor(float DeltaTime) {
 	FRotator CloseDoor(Owner->GetActorRotation());
 	CloseDoor.Yaw = FMath::Lerp(CloseDoor.Yaw, InitalYaw, DeltaTime * DoorCloseSpeed);
 	Owner->SetActorRotation(CloseDoor);
+
+	if (DoorOpened && AudioComponent) {
+		AudioComponent->Play();
+		DoorOpened = false;
+	}
 }
 
+void UOpenDoor::FindAudioComponent() {
+	AudioComponent = Owner->FindComponentByClass<UAudioComponent>();
+	if (!AudioComponent) {
+		UE_LOG(LogTemp, Error, TEXT("Audio Component NOT Found on %s"), *Owner->GetName());
+	}
+}

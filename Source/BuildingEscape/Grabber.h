@@ -24,18 +24,26 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	AActor* Owner;
-	UWorld* World;
+	AActor* Owner = nullptr;
+	UWorld* World = nullptr;
+
+	FVector LineTraceEnd;
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
 
 	UPROPERTY(EditAnywhere)
 	float TraceLineLength = 100.f;
 	
+	UPROPERTY()
 	UPhysicsHandleComponent* PhyscisHandle = nullptr;
+	
+	UPROPERTY()
 	UInputComponent* InputComponent = nullptr;
 
 	void Grab();
 	void Release();
 	void FindAndSetPhysicsHandle();
 	void FindAndSetInputComponent();
-	AActor* GetHitActor() const;
+	void RefreshTransform();
+	FHitResult GetHitResult() const;
 };

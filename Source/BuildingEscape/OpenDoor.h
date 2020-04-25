@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Engine/TriggerVolume.h"
+#include "Components/AudioComponent.h"
 
 #include "OpenDoor.generated.h"
-
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BUILDINGESCAPE_API UOpenDoor : public UActorComponent
@@ -27,14 +27,17 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void OpenDoor(float DeltaTime);
 	void CloseDoor(float DeltaTime);
+	float TotalMassOnPressurePlate() const;
+	void FindAudioComponent();
 
 private:
 
-	UWorld *World;
-	AActor *Owner;
+	UWorld *World = nullptr;
+	AActor *Owner = nullptr;
 	float InitalYaw = 0.f;
 	float LastOpenTime = 0.f;
 //   float CurrentYaw = 0.f;
+	bool DoorOpened = false;
 	
 	UPROPERTY(EditAnywhere)
 	float TargetYaw = 90.f;
@@ -49,9 +52,15 @@ private:
 	float DoorOpenSpeed = 1.f;
 
 	UPROPERTY(EditAnywhere)
-	ATriggerVolume* PressurePlate;
+	ATriggerVolume* PressurePlate = nullptr;
+
+	UPROPERTY()
+	UAudioComponent* AudioComponent = nullptr;
+
+	// UPROPERTY(EditAnywhere)
+	// AActor* Actor;
 
 	UPROPERTY(EditAnywhere)
-	AActor* Actor;
+	float Threshold = 50.f;
 
 };
